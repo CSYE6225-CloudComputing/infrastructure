@@ -45,7 +45,7 @@ aws --profile=dev cloudformation wait stack-update-complete --stack-name csye622
 For passing parameters
 
 ```
-aws --profile=dev cloudformation create-stack --stack-name csye6225-infra-4 --template-body file://csye6225-infra.yml --parameters ParameterKey=AMI,ParameterValue=ami-0e0e19f93f3dddcfe ParameterKey=VpcName,ParameterValue=VPC-A4 ParameterKey=KeyName,ParameterValue=/Downloads/amikey.pem
+aws --profile=dev cloudformation create-stack --stack-name csye6225-infra-4 --template-body file://csye6225-infra.yml --parameters ParameterKey=AMI,ParameterValue=ami-0e0e19f93f3dddcfe ParameterKey=VpcName,ParameterValue=VPC-A4 ParameterKey=KeyName,ParameterValue=/Downloads/amikey
 ```
 
 
