@@ -9,101 +9,73 @@ Parameters:
     Description: "Key Name for Instance"
     Type: String
 
-  AmiID:
-    Description: "AMI ID for Instance"
+  AMI:
+    Type: String
+    Description: Enter valid ami id
+
+  VpcCIDR:
+    Description: IP Range (CIDR Notation) for VPC
+    Type: String
+    Default: 10.0.0.0/16
+
+  # Creating subnets (Each for different AZ)
+  PublicSubnet1CIDR:
+    Default: 10.0.0.0/24
+    Description: Enter the IP range (CIDR notation) for public subnet 1
     Type: String
 
-  VpcCidrBlock:
-    Description: "CIDR Block for VPC"
+  PublicSubnet2CIDR:
+    Default: 10.0.1.0/24
+    Description: Enter the IP range (CIDR notation) for public subnet 2
     Type: String
-    Default: "10.0.0.0/16"
 
-  VpcSubnetCidrBlocks: 
-    Description: "List of CIDR blocks"
-    Type: CommaDelimitedList
-    Default: "10.0.10.0/24, 10.0.11.0/24, 10.0.12.0/24, 10.0.13.0/24, 10.0.14.0/24, 10.0.15.0/24"
-
-  VpcSubnetAvailabilityZones: 
-    Description: "List of Availability Zones"
-    Type: CommaDelimitedList
-    Default: "us-east-1a, us-east-1b, us-east-1c"
-
-  PublicRouteDestinationCidrBlock:
-    Description: "CIDR Block for Public Route"
+  PublicSubnet3CIDR:
+    Default: 10.0.2.0/24
+    Description: Enter the IP range (CIDR notation) for public subnet 3
     Type: String
-    Default: "0.0.0.0/0"
-
-  PublicSubnetNames:
-    Description: "Name Tags for Subnets"
-    Type: CommaDelimitedList
-    Default: "PublicSubnet1, PublicSubnet2, PublicSubnet3"
-
-  PrivateSubnetNames:
-    Description: "Name Tags for Subnets"
-    Type: CommaDelimitedList
-    Default: "PrivateSubnet1, PrivateSubnet2, PrivateSubnet3"
-
-  PublicRouteTableName:
-    Description: "Name Tag for Public Route Table"
+  
+  #Private subnet1
+  PrivateSubnet1CIDR:
+    Default: 10.0.3.0/24
+    Description: Enter the IP range (CIDR notation) for private subnet 1
     Type: String
-    Default: "PublicRouteTable"
 
-  PrivateRouteTableName:
-    Description: "Name Tag for Private Route Table"
+  #Private subnet2
+  PrivateSubnet2CIDR:
+    Default: 10.0.4.0/24
+    Description: Enter the IP range (CIDR notation) for private subnet 2
     Type: String
-    Default: "PrivateRouteTable"
 
-  InternetGatewayName:
-    Description: "Name Tag for Internet Gateway"
+  #Private subnet3
+  PrivateSubnet3CIDR:
+    Default: 10.0.5.0/24
+    Description: Enter the IP range (CIDR notation) for private subnet 3
     Type: String
-    Default: "InternetGateway"
 
-  AppSecurityGroup:
-    Description: "Name Tag for Application Security Group"
-    Type: String
-    Default: "application"
-
-  DBSecurityGroupName:
-    Description: "Name Tag for DB Security Group"
-    Type: String
-    Default: "database"
-
-  LBSecurityGroup:
-    Description: "Name Tag for LB Security Group"
-    Type: String
-    Default: "load balancer"
-
-  EC2InstanceName:
-    Description: "Instance Name"
-    Type: String
-    Default: "CSYE6225-CloudApplication"
-
-  InstanceType:
-    Description: EC2 instance Type
-    Type: String
-    Default: t2.micro
-
-  S3BucketName:
-    Description: "S3 Bucket Name"
-    Type: String
-    Default: demo
-
-  Ipv4Cidr:
-    Description: "AMI ID for Instance"
-    Type: String
-    Default: "0.0.0.0/0"
-
+  #parameters
+  
   ProfileName:
-    Default: demo
+    Default: dev
     Type: String
+    Description: Enter the profile that you want this to run on either dev or demo
 
-  myLaunchTemplateVersionNumber:
+  DBPassword:
+    Default: password
     Type: String
-    Default: "1.0"
+    Description: Db password
+  
+  DBName:
+    Default: csye6225
+    Type: String
+    Description: Db name
+  
+  AWSAccessKeyID:
+    Type: String
+    Description: access key id
 
-  DNSName:
+  AWSSecretAccessKey:
     Type: String
-    Default: "demo.prasannanimbalkar.me."
+    Description: access key secret
 
 
 
@@ -112,301 +84,204 @@ Resources:
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: !Ref VpcCidrBlock
-      EnableDnsSupport: 'true'
-      EnableDnsHostnames: 'true'
-      InstanceTenancy: 'default'
-      Tags: 
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
       - Key: Name
-        Value: !Ref AWS::StackName
+        Value: !Join ["", [!Ref "AWS::StackName", "-VPC"]]
 
   # Create an Internet Gateway
-  InternetGateway:
+  myInternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
-      - Key: Name
-        Value: !Ref InternetGatewayName
+        - Key: Name
+          Value: IGW
 
   # Attach the Internet Gateway to VPC
-  InternetGatewayAttachment:
+  VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      InternetGatewayId: !Ref InternetGateway
+    Properties: 
       VpcId: !Ref VPC
-
+      InternetGatewayId: !Ref myInternetGateway
 
   # SUBNETS
   # Public Subnet's
-  PublicSubnet1:
+  myPublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId:
-        Ref: VPC
-      CidrBlock: !Select [0, !Ref VpcSubnetCidrBlocks]
-      AvailabilityZone: !Select 
-        - 0
-        - !GetAZs 
-          Ref: 'AWS::Region'
-      MapPublicIpOnLaunch: true
-      Tags: 
-      - Key: Name
-        Value: !Select [0, !Ref PublicSubnetNames]
-      - Key: VPC Name
-        Value: !Ref AWS::StackName
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !Ref PublicSubnet1CIDR
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-subnet-1
+      VpcId: !Ref VPC
 
-  PublicSubnet2:
+  myPublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId:
-        Ref: VPC
-      CidrBlock: !Select [1, !Ref VpcSubnetCidrBlocks]
-      AvailabilityZone: !Select 
-        - 1
-        - !GetAZs 
-          Ref: 'AWS::Region'
-      MapPublicIpOnLaunch: true
-      Tags: 
-      - Key: Name
-        Value: !Select [1, !Ref PublicSubnetNames]
-      - Key: VPC Name
-        Value: !Ref AWS::StackName
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: !Ref PublicSubnet2CIDR
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-subnet-2
+      VpcId: !Ref VPC
 
-  PublicSubnet3:
+  myPublicSubnet3:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId:
-        Ref: VPC
-      CidrBlock: !Select [2, !Ref VpcSubnetCidrBlocks]
-      AvailabilityZone: !Select 
-        - 2
-        - !GetAZs 
-          Ref: 'AWS::Region'
-      MapPublicIpOnLaunch: true
-      Tags: 
-      - Key: Name
-        Value: !Select [2, !Ref PublicSubnetNames]
-      - Key: VPC Name
-        Value: !Ref AWS::StackName
+      AvailabilityZone: !Select [2, !GetAZs ""]
+      CidrBlock: !Ref PublicSubnet3CIDR
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-subnet-3
+      VpcId: !Ref VPC
 
   # Private Subnet's
-  PrivateSubnet1:
+  myPrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId:
-        Ref: VPC
-      CidrBlock: !Select [3, !Ref VpcSubnetCidrBlocks]
-      AvailabilityZone: !Select 
-        - 0
-        - !GetAZs 
-          Ref: 'AWS::Region'
-      MapPublicIpOnLaunch: false
-      Tags: 
-      - Key: Name
-        Value: !Select [0, !Ref PrivateSubnetNames]
-      - Key: VPC Name
-        Value: !Ref AWS::StackName
-
-  PrivateSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId:
-        Ref: VPC
-      CidrBlock: !Select [4, !Ref VpcSubnetCidrBlocks]
-      AvailabilityZone: !Select 
-        - 1
-        - !GetAZs 
-          Ref: 'AWS::Region'
-      MapPublicIpOnLaunch: false
-      Tags: 
-      - Key: Name
-        Value: !Select [1, !Ref PrivateSubnetNames]
-      - Key: VPC Name
-        Value: !Ref AWS::StackName
-
-  PrivateSubnet3:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId:
-        Ref: VPC
-      CidrBlock: !Select [5, !Ref VpcSubnetCidrBlocks]
-      AvailabilityZone: !Select 
-        - 2
-        - !GetAZs 
-          Ref: 'AWS::Region'
-      MapPublicIpOnLaunch: false
-      Tags: 
-      - Key: Name
-        Value: !Select [2, !Ref PrivateSubnetNames]
-      - Key: VPC Name
-        Value: !Ref AWS::StackName
-
-  # Create a Public route table for the VPC
-  PublicRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId:  
-        Ref: VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnet1CIDR
       Tags:
-      - Key: Name
-        Value: !Ref PublicRouteTableName
-      - Key: VPC Name
-        Value: !Ref AWS::StackName
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Private-subnet-1
+      VpcId: !Ref VPC
+
+  myPrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Private-subnet-2
+      VpcId: !Ref VPC
+
+  myPrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [2, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnet3CIDR
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Private-subnet-3
+      VpcId: !Ref VPC
+
 
   # Create a Private route table for the VPC
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId:  
-        Ref: VPC
+      VpcId: !Ref VPC
       Tags:
-      - Key: Name
-        Value: !Ref PrivateRouteTableName
-      - Key: VPC Name
-        Value: !Ref AWS::StackName
-
-  #
-  PublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: InternetGatewayAttachment
-    Properties:
-      RouteTableId:
-        Ref: PublicRouteTable
-      DestinationCidrBlock: !Ref PublicRouteDestinationCidrBlock
-      GatewayId:
-        Ref: InternetGateway
-
-  # Associate Route Table with subnet Public
-  PublicSubnet1RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId:
-        Ref: PublicSubnet1
-      RouteTableId:
-        Ref: PublicRouteTable
-
-  PublicSubnet2RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId:
-        Ref: PublicSubnet2
-      RouteTableId:
-        Ref: PublicRouteTable
-
-  PublicSubnet3RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId:
-        Ref: PublicSubnet3
-      RouteTableId:
-        Ref: PublicRouteTable
-
-  # Associate Route Table with subnet Private
-  PrivateSubnet1RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId:
-        Ref: PrivateSubnet1
-      RouteTableId:
-        Ref: PrivateRouteTable
-
-  PrivateSubnet2RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId:
-        Ref: PrivateSubnet2
-      RouteTableId:
-        Ref: PrivateRouteTable
-
-  PrivateSubnet3RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId:
-        Ref: PrivateSubnet3
-      RouteTableId:
-        Ref: PrivateRouteTable
-
-  # Creating App Security Group
-  ApplicationSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-        GroupDescription: Application Security Group
-        GroupName: application
-        VpcId:
-          Ref: VPC
-        SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3000
-          ToPort: 3000
-          SourceSecurityGroupId: !GetAtt LoadBalancerSecurityGroup.GroupId
-        - IpProtocol: tcp
-          Description: SSH
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 
-            Ref: Ipv4Cidr
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          CidrIp:
-            Ref: Ipv4Cidr
-        Tags:
         - Key: Name
-          Value: !Ref AppSecurityGroup
+          Value: !Sub ${AWS::StackName}-private
 
-  # Creating Load Balancer Security Group
-  LoadBalancerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+  # Associate Route Table with subnet
+  myPrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-        GroupDescription: Load Balancer security group
-        GroupName: load balancer
-        VpcId:
-          Ref: VPC
-        SecurityGroupIngress:
+      SubnetId: !Ref myPrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  myPrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref myPrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  myPrivateSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref myPrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable
+
+  # Add routes in the route table
+  myRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-routingTable
+
+  myRoute:
+    Type: AWS::EC2::Route
+    DependsOn: myInternetGateway
+    Properties:
+      RouteTableId: !Ref myRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref myInternetGateway
+
+
+  # Associate Route Table with subnet in AZ 1
+  mySubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref myPublicSubnet1
+      RouteTableId: !Ref myRouteTable
+
+  mySubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref myPublicSubnet2
+      RouteTableId: !Ref myRouteTable
+
+  mySubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref myPublicSubnet3
+      RouteTableId: !Ref myRouteTable
+  
+  # Creating App Security Group
+  myApplicationSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allow http/Https and ssh
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: application
+      SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp:
-            Ref: Ipv4Cidr
+          CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp:
-            Ref: Ipv4Cidr
-        Tags:
-        - Key: Name
-          Value: !Ref LBSecurityGroup
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
 
-  # Database security group
-  DBSecurityGroup:
+
+  #Database security group
+  DatabaseSecurityGroup:
     DependsOn:
-      - PrivateSubnet1
-      - PrivateSubnet2
-      - PrivateSubnet3
+      - myPrivateSubnet1
+      - myPrivateSubnet2
+      - myPrivateSubnet3
     Type: AWS::EC2::SecurityGroup
     Properties:
-        GroupDescription: database
-        GroupName: database
-        VpcId:
-          Ref: VPC
-        SecurityGroupIngress:
+      GroupDescription: database access
+      SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3306
           ToPort: 3306
-          SourceSecurityGroupId: !GetAtt ApplicationSecurityGroup.GroupId 
-        Tags:
+          SourceSecurityGroupId: !Ref myApplicationSecurityGroup
+      Tags:
         - Key: Name
-          Value: !Ref DBSecurityGroupName
-
- # ----------------------------------------------------------------
-
-  
-  
-
-
-  
-
-  
+          Value: database
+      VpcId: !Ref VPC  
 
 
   #S3 Bucket creation
@@ -521,7 +396,7 @@ Resources:
       Roles:
         - Ref: RootRole
 
- #Creating AMI EC2 Instance
+  #Creating AMI EC2 Instance
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -556,13 +431,20 @@ Resources:
           echo export region="us-east-1" >> /etc/profile
           sleep 20
           source /etc/profile
-          sudo -i
-          sudo pm2 restart all --update-env --watch --wait-ready --listen-timeout 2000
-          cd /home/ubuntu/node-app/
-          rm -rf node_modules
-          sudo npm i
-          sleep 20
-          pm2 restart all --update-env --watch --wait-ready --listen-timeout 2000
-          sleep 20
+          cd /home/ubuntu/node-app
+          sudo pm2 restart all --update-env --watch
+          for (( c=1; c<=6; c++ ))
+          do 
+            sleep 10
+            sudo pm2 restart all --update-env
+          done
 
-          
+  DNSHost:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: dev.prasannanimbalkar.me.
+      Name: dev.prasannanimbalkar.me.
+      Type: A
+      TTL: 900
+      ResourceRecords:
+      - !GetAtt EC2Instance.PublicIp
