@@ -65,7 +65,7 @@ Parameters:
     Description: Db password
   
   DBName:
-    Default: usersDB
+    Default: csye6225
     Type: String
     Description: Db name
   
@@ -259,10 +259,6 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
           FromPort: 3000
           ToPort: 3000
           CidrIp: 0.0.0.0/0
@@ -346,7 +342,7 @@ Resources:
       DBName: csye6225
       MasterUsername: csye6225
       MasterUserPassword: password
-      Engine: MySQL
+      Engine: mysql
       EngineVersion: 8.0.28
       DBInstanceClass: db.t3.micro
       DBSubnetGroupName: !Ref RdsDBSubnetGroup
@@ -400,7 +396,7 @@ Resources:
       Roles:
         - Ref: RootRole
 
- #Creating AMI EC2 Instance
+  #Creating AMI EC2 Instance
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -434,4 +430,21 @@ Resources:
           echo export DB="csye6225" >> /etc/profile
           echo export region="us-east-1" >> /etc/profile
           sleep 20
-          sudo pm2 restart all --update-env
+          source /etc/profile
+          cd /home/ubuntu/node-app
+          sudo pm2 restart all --update-env --watch
+          for (( c=1; c<=6; c++ ))
+          do 
+            sleep 10
+            sudo pm2 restart all --update-env
+          done
+
+  DNSHost:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: dev.prasannanimbalkar.me.
+      Name: dev.prasannanimbalkar.me.
+      Type: A
+      TTL: 900
+      ResourceRecords:
+      - !GetAtt EC2Instance.PublicIp
