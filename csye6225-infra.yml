@@ -110,9 +110,7 @@ Parameters:
     Type: String
     Default: "nimbalkar.p@northeastern.edu"
 
-
-
-
+  
 Resources:
    # Create a VPC
   VPC:
@@ -541,15 +539,10 @@ Resources:
           echo export AWS_BUCKET_NAME="${S3Bucket}" >> /etc/environment
           echo export AWS_REGION="us-east-1" >> /etc/environment
           echo export DB="csye6225" >> /etc/environment
-          sleep 20
+          sleep 5
           source /etc/environment
-          sudo -i
-          sudo pm2 restart all --update-env --watch --wait-ready --listen-timeout 2000
           cd /home/ubuntu/node-app/
-          rm -rf node_modules
-          sudo npm i
-          sleep 10
-          pm2 restart all --update-env --watch --wait-ready --listen-timeout 2000
+          sudo pm2 restart all --update-env --wait-ready --listen-timeout 2000
           sleep 10
 
   DNSHost:
