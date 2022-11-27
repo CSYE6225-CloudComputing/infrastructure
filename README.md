@@ -53,7 +53,7 @@ aws --profile=dev cloudformation create-stack --stack-name csye6225-infra-4 --te
 
 One cloud-native concept to get comfortable with is that Resources are Disposable. We can create and delete the stack whenever we wish now that we have our template.
 
-From the console, select the stack and take the 'delete stack' action. Or from the CLI run command
+From the console, select the stack and take the 'delete stack' action. Or from the CLI run command.
 
 ``` 
 aws --profile=dev cloudformation delete-stack --stack-name csye6225-infra
