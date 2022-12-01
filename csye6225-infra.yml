@@ -620,8 +620,8 @@ Resources:
     Properties:
       EvaluationPeriods: '1'
       Statistic: Average
-      Threshold: '5'
-      AlarmDescription: Alarm if CPU utilization more than 5%
+      Threshold: '10'
+      AlarmDescription: Alarm if CPU utilization more than 10%
       Period: '300'
       AlarmActions:
       - !Ref ScaleOutPolicy
@@ -637,8 +637,8 @@ Resources:
     Properties:
       EvaluationPeriods: '1'
       Statistic: Average
-      Threshold: '3'
-      AlarmDescription: Alarm if CPU utilization is less than 3%
+      Threshold: '6'
+      AlarmDescription: Alarm if CPU utilization is less than 6%
       Period: '300'
       AlarmActions:
       - !Ref ScaleInPolicy
